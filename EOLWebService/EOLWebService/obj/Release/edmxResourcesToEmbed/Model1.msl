@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+  <EntityContainerMapping StorageEntityContainer="EOLModelStoreContainer" CdmEntityContainer="EOLEntities">
+    <EntitySetMapping Name="Only">
+      <EntityTypeMapping TypeName="EOLModel.Only">
+        <MappingFragment StoreEntitySet="Only">
+          <ScalarProperty Name="Date" ColumnName="Date" />
+          <ScalarProperty Name="Assemblycode" ColumnName="Assemblycode" />
+          <ScalarProperty Name="ID" ColumnName="ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="PlcDot">
+      <EntityTypeMapping TypeName="EOLModel.PlcDot">
+        <MappingFragment StoreEntitySet="PlcDot">
+          <ScalarProperty Name="Length" ColumnName="Length" />
+          <ScalarProperty Name="Subcomm" ColumnName="Subcomm" />
+          <ScalarProperty Name="Comm" ColumnName="Comm" />
+          <ScalarProperty Name="Type" ColumnName="Type" />
+          <ScalarProperty Name="Adress" ColumnName="Adress" />
+          <ScalarProperty Name="ID" ColumnName="ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="Save">
+      <EntityTypeMapping TypeName="EOLModel.Save">
+        <MappingFragment StoreEntitySet="Save">
+          <ScalarProperty Name="Date" ColumnName="Date" />
+          <ScalarProperty Name="Data5" ColumnName="Data5" />
+          <ScalarProperty Name="Data4" ColumnName="Data4" />
+          <ScalarProperty Name="Data3" ColumnName="Data3" />
+          <ScalarProperty Name="Data2" ColumnName="Data2" />
+          <ScalarProperty Name="Data1" ColumnName="Data1" />
+          <ScalarProperty Name="Assemblycode" ColumnName="Assemblycode" />
+          <ScalarProperty Name="Number" ColumnName="Number" />
+          <ScalarProperty Name="ID" ColumnName="ID" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+  </EntityContainerMapping>
+</Mapping>

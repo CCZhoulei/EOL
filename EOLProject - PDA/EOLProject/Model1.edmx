@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="EOLModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Only">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Assemblycode" Type="varchar" MaxLength="50" />
+          <Property Name="Date" Type="datetime" />
+        </EntityType>
+        <EntityType Name="PlcDot">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Adress" Type="nvarchar" MaxLength="50" />
+          <Property Name="Type" Type="nvarchar" MaxLength="50" />
+          <Property Name="Comm" Type="nvarchar" MaxLength="50" />
+          <Property Name="Subcomm" Type="nvarchar" MaxLength="50" />
+          <Property Name="Length" Type="nvarchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="Save">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Number" Type="nvarchar" MaxLength="50" />
+          <Property Name="Assemblycode" Type="nvarchar" MaxLength="50" />
+          <Property Name="Data1" Type="nvarchar" MaxLength="50" />
+          <Property Name="Data2" Type="nvarchar" MaxLength="50" />
+          <Property Name="Data3" Type="nvarchar" MaxLength="50" />
+          <Property Name="Data4" Type="nvarchar" MaxLength="50" />
+          <Property Name="Data5" Type="nvarchar" MaxLength="50" />
+          <Property Name="Date" Type="datetime" />
+        </EntityType>
+        <EntityContainer Name="EOLModelStoreContainer">
+          <EntitySet Name="Only" EntityType="Self.Only" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="PlcDot" EntityType="Self.PlcDot" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Save" EntityType="Self.Save" Schema="dbo" store:Type="Tables" />
+        </EntityContainer>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="EOLModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityContainer Name="EOLEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Only" EntityType="EOLModel.Only" />
+          <EntitySet Name="PlcDot" EntityType="EOLModel.PlcDot" />
+          <EntitySet Name="Save" EntityType="EOLModel.Save" />
+        </EntityContainer>
+        <EntityType Name="Only">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Assemblycode" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="PlcDot">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Adress" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Type" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Comm" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Subcomm" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Length" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="Save">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Number" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Assemblycode" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Data1" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Data2" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Data3" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Data4" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Data5" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
+        </EntityType>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="EOLModelStoreContainer" CdmEntityContainer="EOLEntities">
+          <EntitySetMapping Name="Only">
+            <EntityTypeMapping TypeName="EOLModel.Only">
+              <MappingFragment StoreEntitySet="Only">
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="Assemblycode" ColumnName="Assemblycode" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="PlcDot">
+            <EntityTypeMapping TypeName="EOLModel.PlcDot">
+              <MappingFragment StoreEntitySet="PlcDot">
+                <ScalarProperty Name="Length" ColumnName="Length" />
+                <ScalarProperty Name="Subcomm" ColumnName="Subcomm" />
+                <ScalarProperty Name="Comm" ColumnName="Comm" />
+                <ScalarProperty Name="Type" ColumnName="Type" />
+                <ScalarProperty Name="Adress" ColumnName="Adress" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Save">
+            <EntityTypeMapping TypeName="EOLModel.Save">
+              <MappingFragment StoreEntitySet="Save">
+                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="Data5" ColumnName="Data5" />
+                <ScalarProperty Name="Data4" ColumnName="Data4" />
+                <ScalarProperty Name="Data3" ColumnName="Data3" />
+                <ScalarProperty Name="Data2" ColumnName="Data2" />
+                <ScalarProperty Name="Data1" ColumnName="Data1" />
+                <ScalarProperty Name="Assemblycode" ColumnName="Assemblycode" />
+                <ScalarProperty Name="Number" ColumnName="Number" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="false" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="无" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

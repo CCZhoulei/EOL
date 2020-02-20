@@ -1,0 +1,13 @@
+F:\EOL模拟测试\PDACode\PDACode\bin\Debug\PDACode.exe
+F:\EOL模拟测试\PDACode\PDACode\bin\Debug\PDACode.pdb
+F:\EOL模拟测试\PDACode\PDACode\obj\Debug\ResolveAssemblyReference.cache
+F:\EOL模拟测试\PDACode\PDACode\obj\Debug\PDACode.Form1.resources
+F:\EOL模拟测试\PDACode\PDACode\obj\Debug\PDACode.Properties.Resources.resources
+F:\EOL模拟测试\PDACode\PDACode\obj\Debug\PDACode.csproj.GenerateResource.Cache
+F:\EOL模拟测试\PDACode\PDACode\obj\Debug\PDACode.exe
+F:\EOL模拟测试\PDACode\PDACode\obj\Debug\PDACode.pdb
+F:\EOL模拟测试\PDACode\PDACode\bin\Debug\btCommLibNet.dll
+F:\EOL模拟测试\PDACode\PDACode\bin\Debug\btFileLibNet.dll
+F:\EOL模拟测试\PDACode\PDACode\bin\Debug\btLibDefNet.dll
+F:\EOL模拟测试\PDACode\PDACode\bin\Debug\btScanLibNet.dll
+F:\EOL模拟测试\PDACode\PDACode\bin\Debug\btSysLibNet.dll
