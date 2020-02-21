@@ -15,6 +15,7 @@ namespace EOLProject
     public partial class Save
     {
         public int ID { get; set; }
+        public Nullable<System.DateTime> Date { get; set; }
         public string Number { get; set; }
         public string Assemblycode { get; set; }
         public string Data1 { get; set; }
@@ -22,6 +23,8 @@ namespace EOLProject
         public string Data3 { get; set; }
         public string Data4 { get; set; }
         public string Data5 { get; set; }
-        public Nullable<System.DateTime> Date { get; set; }
+        public string Data6 { get; set; }
+        public string Data7 { get; set; }
+        public string Data8 { get; set; }
     }
 }

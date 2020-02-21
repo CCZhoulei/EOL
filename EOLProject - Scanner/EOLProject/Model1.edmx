@@ -29,6 +29,7 @@
             <PropertyRef Name="ID" />
           </Key>
           <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Date" Type="datetime" />
           <Property Name="Number" Type="nvarchar" MaxLength="50" />
           <Property Name="Assemblycode" Type="nvarchar" MaxLength="50" />
           <Property Name="Data1" Type="nvarchar" MaxLength="50" />
@@ -36,7 +37,9 @@
           <Property Name="Data3" Type="nvarchar" MaxLength="50" />
           <Property Name="Data4" Type="nvarchar" MaxLength="50" />
           <Property Name="Data5" Type="nvarchar" MaxLength="50" />
-          <Property Name="Date" Type="datetime" />
+          <Property Name="Data6" Type="nvarchar" MaxLength="50" />
+          <Property Name="Data7" Type="nvarchar" MaxLength="50" />
+          <Property Name="Data8" Type="nvarchar" MaxLength="50" />
         </EntityType>
         <EntityContainer Name="EOLModelStoreContainer">
           <EntitySet Name="Only" EntityType="Self.Only" Schema="dbo" store:Type="Tables" />
@@ -76,6 +79,7 @@
             <PropertyRef Name="ID" />
           </Key>
           <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Date" Type="DateTime" Precision="3" />
           <Property Name="Number" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="Assemblycode" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="Data1" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
@@ -83,7 +87,9 @@
           <Property Name="Data3" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="Data4" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="Data5" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
-          <Property Name="Date" Type="DateTime" Precision="3" />
+          <Property Name="Data6" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Data7" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Data8" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -115,7 +121,9 @@
           <EntitySetMapping Name="Save">
             <EntityTypeMapping TypeName="EOLModel.Save">
               <MappingFragment StoreEntitySet="Save">
-                <ScalarProperty Name="Date" ColumnName="Date" />
+                <ScalarProperty Name="Data8" ColumnName="Data8" />
+                <ScalarProperty Name="Data7" ColumnName="Data7" />
+                <ScalarProperty Name="Data6" ColumnName="Data6" />
                 <ScalarProperty Name="Data5" ColumnName="Data5" />
                 <ScalarProperty Name="Data4" ColumnName="Data4" />
                 <ScalarProperty Name="Data3" ColumnName="Data3" />
@@ -123,6 +131,7 @@
                 <ScalarProperty Name="Data1" ColumnName="Data1" />
                 <ScalarProperty Name="Assemblycode" ColumnName="Assemblycode" />
                 <ScalarProperty Name="Number" ColumnName="Number" />
+                <ScalarProperty Name="Date" ColumnName="Date" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
               </MappingFragment>
             </EntityTypeMapping>

@@ -22,10 +22,10 @@ namespace EOLProject
         //日志文件记录
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         //线程
-        Thread thread;    
+        Thread thread;
         //实例化PLC连接
         IPEndPoint iPEndPoint = new IPEndPoint(IPAddress.Parse("192.168.0.37"), 3001);
-        Socket socket ;
+        Socket socket;
         //实例化网络通讯检测
         Ping ping = new Ping();
 
@@ -34,10 +34,64 @@ namespace EOLProject
             InitializeComponent();
         }
 
+        /// <summary>
+        /// load事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Form1_Load(object sender, EventArgs e)
         {
-            this.dataGridView1.Rows[0].Cells[0].Value = "制造参数值";
-            
+            #region 窗体启动时界面设置
+            this.groupBox1.Paint += GroupBox_Paint;
+            this.groupBox2.Paint += GroupBox_Paint;
+            this.groupBox3.Paint += GroupBox_Paint;
+            this.groupBox7.Paint += GroupBox_Paint;
+            this.groupBox5.Paint += GroupBox_Paint;
+            this.groupBox6.Paint += GroupBox_Paint;
+            this.dataGridView1.Rows.Add();
+            this.dataGridView1.Rows.Add();
+            this.dataGridView1.Rows.Add();
+            this.dataGridView1.Rows.Add();
+            this.dataGridView1.Rows[0].Cells[0].Value = "理论值";
+            this.dataGridView1.Rows[0].Cells[1].Value = "5.00-6.00";
+            this.dataGridView1.Rows[0].Cells[2].Value = "5.00-6.00";
+            this.dataGridView1.Rows[0].Cells[3].Value = "5.00-6.00";
+            this.dataGridView1.Rows[0].Cells[4].Value = "5.00-6.00";
+            this.dataGridView1.Rows[1].Cells[0].Value = "实际值";
+            this.dataGridView1.Rows[2].Cells[0].Value = "";
+            this.dataGridView1.Rows[2].Cells[1].Value = "数据5";
+            this.dataGridView1.Rows[2].Cells[2].Value = "数据6";
+            this.dataGridView1.Rows[2].Cells[3].Value = "数据7";
+            this.dataGridView1.Rows[2].Cells[4].Value = "数据8";
+            this.dataGridView1.Rows[3].Cells[0].Value = "理论值";
+            this.dataGridView1.Rows[3].Cells[1].Value = "5.00-6.00";
+            this.dataGridView1.Rows[3].Cells[2].Value = "5.00-6.00";
+            this.dataGridView1.Rows[3].Cells[3].Value = "5.00-6.00";
+            this.dataGridView1.Rows[3].Cells[4].Value = "5.00-6.00";
+            this.dataGridView1.Rows[4].Cells[0].Value = "实际值";
+            this.dataGridView1.Rows[1].Cells[0].Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            this.dataGridView1.Rows[4].Cells[0].Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            this.dataGridView1.Rows[1].Cells[1].Style.Font = new Font("微软雅黑", 72);
+            this.dataGridView1.Rows[1].Cells[1].Style.ForeColor = Color.Blue;
+            this.dataGridView1.Rows[1].Cells[2].Style.Font = new Font("微软雅黑", 72);
+            this.dataGridView1.Rows[1].Cells[2].Style.ForeColor = Color.Blue;
+            this.dataGridView1.Rows[1].Cells[3].Style.Font = new Font("微软雅黑", 72);
+            this.dataGridView1.Rows[1].Cells[3].Style.ForeColor = Color.Blue;
+            this.dataGridView1.Rows[1].Cells[4].Style.Font = new Font("微软雅黑", 72);
+            this.dataGridView1.Rows[1].Cells[4].Style.ForeColor = Color.Blue;
+            this.dataGridView1.Rows[4].Cells[1].Style.Font = new Font("微软雅黑", 72);
+            this.dataGridView1.Rows[4].Cells[1].Style.ForeColor = Color.Blue;
+            this.dataGridView1.Rows[4].Cells[2].Style.Font = new Font("微软雅黑", 72);
+            this.dataGridView1.Rows[4].Cells[2].Style.ForeColor = Color.Blue;
+            this.dataGridView1.Rows[4].Cells[3].Style.Font = new Font("微软雅黑", 72);
+            this.dataGridView1.Rows[4].Cells[3].Style.ForeColor = Color.Blue;
+            this.dataGridView1.Rows[4].Cells[4].Style.Font = new Font("微软雅黑", 72);
+            this.dataGridView1.Rows[4].Cells[4].Style.ForeColor = Color.Blue;
+            this.dataGridView1.GridColor = Color.Black;
+            this.dataGridView1.EnableHeadersVisualStyles = false;
+            this.dataGridView1.Rows[0].Selected = false;
+            #endregion
+
             thread = new Thread(Detection);    //执行程序
             thread.Start();
         }
@@ -72,7 +126,7 @@ namespace EOLProject
             {
                 try
                 {
-                    #region 判断与扫码枪的串口连接是否正常
+                    #region 判断与扫码枪、PLC的连接是否正常显示不同信息
                     string[] gCOM = SerialPort.GetPortNames();    // 获取设备的所有可用串口
                     bool judge = false;
                     for (int i = 0; i < gCOM.Length; i++)
@@ -88,28 +142,26 @@ namespace EOLProject
                     {
                         this.pictureBox1.BackColor = Color.Green;
                         this.pictureBox2.BackColor = Color.Green;
+
                         if (serialPort.IsOpen == false)
                         {
                             serialPort.Open();
                         }
-                        this.button4.Invoke(new Action(() => { this.button4.Enabled = false; }));
-                        this.label5.Invoke(new Action(() => { this.label5.Text = ""; }));
                         int s = this.label15.Text.Length;
-                        if (s==0)
+                        if (s == 0 || s == 18 || s == 21)
                         {
                             this.label15.Invoke(new Action(() => { this.label15.Text = "请扫取总成条码！"; }));
                         }
                     }
                     else if (judge == false && plcReply.Status == IPStatus.Success)
                     {
-                        this.label5.Invoke(new Action(() => { this.label5.Text = "扫码枪连接异常,请检查扫码枪串口连接"; }));
+                        this.label15.Invoke(new Action(() => { this.label15.Text = "扫码枪连接异常,请检查扫码枪串口连接"; }));
                         this.pictureBox1.BackColor = Color.Red;
                         this.pictureBox2.BackColor = Color.Green;
                     }
                     else if (judge == true && plcReply.Status == IPStatus.TimedOut)
                     {
-                        this.label5.Invoke(new Action(() => { this.label5.Text = "PLC连接异常,请检查PLC网络连接"; }));
-                        this.label15.Invoke(new Action(() => { this.label15.Text = ""; }));
+                        this.label15.Invoke(new Action(() => { this.label15.Text = "PLC连接异常,请检查PLC网络连接"; }));
                         this.pictureBox1.BackColor = Color.Green;
                         this.pictureBox2.BackColor = Color.Red;
                         this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
@@ -119,8 +171,7 @@ namespace EOLProject
                     }
                     else if (judge == false && plcReply.Status == IPStatus.TimedOut)
                     {
-                        this.label5.Invoke(new Action(() => { this.label5.Text = "请检查扫码枪串口连接\n请检查PLC网络连接"; }));
-                        this.label15.Invoke(new Action(() => { this.label15.Text = ""; }));
+                        this.label15.Invoke(new Action(() => { this.label15.Text = "请检查扫码枪串口连接\n请检查PLC网络连接"; }));
                         this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
                         this.pictureBox1.BackColor = Color.Red;
                         this.pictureBox2.BackColor = Color.Red;
@@ -130,19 +181,33 @@ namespace EOLProject
                     }
                     #endregion
 
-                    if (judge == true && plcReply.Status == IPStatus.Success)
+                    if (judge == true && plcReply.Status == IPStatus.Success)    //判断扫码枪与PLC连接正常
                     {
                         Thread.Sleep(1000);
-                        string str = serialPort.ReadExisting().Replace("\r", "").Replace("\n", "");
-                        int extent = str.Length;
-                        if (str.Length == 23)
+                        string str = serialPort.ReadExisting().Replace("\r", "").Replace("\n", "");//接收扫码枪获取的总成条码
+                        //int extent = str.Length;
+                        if (str.Length == 23)    //判断总成条码的长度是否正常
                         {
-                            this.textBox1.Invoke(new Action(() => { this.textBox1.Text = str.Substring(0, 4); }));
-                            this.textBox2.Invoke(new Action(() => { this.textBox2.Text = str; }));
-                            this.label6.Invoke(new Action(() => { this.label6.Text = ""; }));
-                            str = "";
-                            this.pictureBox3.Invoke(new Action(() => { this.pictureBox3.BackColor = Color.Green; }));
-                            this.label15.Invoke(new Action(() => { this.label15.Text = "获取总成条码成功，正在获取制造参数信息！"; }));
+                            #region 清空界面信息
+                            this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
+                            this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.White; }));
+                            this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.White; }));
+                            this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.White; }));
+                            this.dataGridView1.Rows[1].Cells[1].Value = "";
+                            this.dataGridView1.Rows[1].Cells[2].Value = "";
+                            this.dataGridView1.Rows[1].Cells[3].Value = "";
+                            this.dataGridView1.Rows[1].Cells[4].Value = "";
+                            this.dataGridView1.Rows[4].Cells[1].Value = "";
+                            this.dataGridView1.Rows[4].Cells[2].Value = "";
+                            this.dataGridView1.Rows[4].Cells[3].Value = "";
+                            this.dataGridView1.Rows[4].Cells[4].Value = "";
+                            #endregion
+
+                            this.textBox1.Invoke(new Action(() => { this.textBox1.Text = str.Substring(0, 4); }));    //界面显示产品编号
+                            this.textBox2.Invoke(new Action(() => { this.textBox2.Text = str; }));    //界面显示总成条码
+                            str = "";    //将接收总成条码字段清空
+                            this.label15.Invoke(new Action(() => { this.label15.Text = "获取总成条码成功，正在获取制造参数信息！"; }));    //界面显示总成条码获取成功信息
+                            this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.Green; }));    //程序运行状态显示
                             if (plcReply.Status == IPStatus.Success)    //判断与PLC通讯是否正常
                             {
                                 EOLEntities entities = new EOLEntities();
@@ -161,21 +226,35 @@ namespace EOLProject
                                     string result = AnalysisSingleData(recv, PlcData[i].Type);    //解析PLC反馈
                                     list.Add(result);    //添加到本地数组
                                 }
-                                this.dataGridView1.Rows[0].Cells[1].Value = list[0];    //界面显示PLC数据
-                                this.dataGridView1.Rows[0].Cells[2].Value = list[1];
-                                this.dataGridView1.Rows[0].Cells[3].Value = list[2];
-                                this.dataGridView1.Rows[0].Cells[4].Value = list[3];
-                                this.dataGridView1.Rows[0].Cells[5].Value = list[4];
+                                this.dataGridView1.Rows[1].Cells[1].Value = list[0];    //界面显示PLC数据
+                                this.dataGridView1.Rows[1].Cells[2].Value = list[1];
+                                this.dataGridView1.Rows[1].Cells[3].Value = list[2];
+                                this.dataGridView1.Rows[1].Cells[4].Value = list[3];
+                                this.dataGridView1.Rows[4].Cells[1].Value = list[4];
                                 this.button1.Invoke(new Action(() => { this.button1.Enabled = true; }));    //保存数据并打印按钮可以使用
-                                this.pictureBox4.Invoke(new Action(() => { this.pictureBox4.BackColor = Color.Green; }));
-                                this.label15.Invoke(new Action(() => { this.label15.Text = "制造参数获取完成，请保存数据并打印！"; }));
+                                this.label15.Invoke(new Action(() => { this.label15.Text = "制造参数获取完成，请保存数据并打印！"; }));    //界面显示制造参数获取成功信息
+                                this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.Green; }));    //程序运行状态显示
                             }
                         }
-                        else if (str.Length != 0 && str.Length != 23)
+                        else if (str.Length != 0 && str.Length != 23)    //判断总成条码长度异常
                         {
-                            this.label6.Invoke(new Action(() => { this.label6.Text = "总成条码有误，请重新扫码！"; }));
-                            this.label15.Invoke(new Action(() => { this.label15.Text = ""; }));
-                            this.textBox2.Invoke(new Action(() => { this.textBox2.Text = str; }));
+                            #region 清空界面信息
+                            this.textBox1.Invoke(new Action(() => { this.textBox1.Text = ""; }));
+                            this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
+                            this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.White; }));
+                            this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.White; }));
+                            this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.White; }));
+                            this.dataGridView1.Rows[1].Cells[1].Value = "";
+                            this.dataGridView1.Rows[1].Cells[2].Value = "";
+                            this.dataGridView1.Rows[1].Cells[3].Value = "";
+                            this.dataGridView1.Rows[1].Cells[4].Value = "";
+                            this.dataGridView1.Rows[4].Cells[1].Value = "";
+                            this.dataGridView1.Rows[4].Cells[2].Value = "";
+                            this.dataGridView1.Rows[4].Cells[3].Value = "";
+                            this.dataGridView1.Rows[4].Cells[4].Value = "";
+                            #endregion
+                            this.label15.Invoke(new Action(() => { this.label15.Text = "总成条码有误，请重新扫码！"; }));    //界面显示总成条码有误信息
+                            this.textBox2.Invoke(new Action(() => { this.textBox2.Text = str; }));    //界面显示异常总成条码
                         }
                     }
                 }
@@ -193,28 +272,14 @@ namespace EOLProject
 
 
         /// <summary>
-        /// 清空界面信息按钮，将系统界面信息清空
+        /// 查询总成条码
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void button2_Click(object sender, EventArgs e)
         {
-            Thread.Sleep(1000);
-            this.textBox1.Invoke(new Action(() => { this.textBox1.Text = ""; }));
-            this.textBox2.Invoke(new Action(() => { this.textBox2.Text = ""; }));
-            this.dataGridView1.Rows[0].Cells[1].Value = "";
-            this.dataGridView1.Rows[0].Cells[2].Value = "";
-            this.dataGridView1.Rows[0].Cells[3].Value = "";
-            this.dataGridView1.Rows[0].Cells[4].Value = "";
-            this.dataGridView1.Rows[0].Cells[5].Value = "";
-            this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
-            this.button2.Invoke(new Action(() => { this.button2.Enabled = false; }));
-            this.pictureBox6.Invoke(new Action(() => { this.pictureBox6.BackColor = Color.Green; }));
-            this.pictureBox3.Invoke(new Action(() => { this.pictureBox3.BackColor = Color.Red; }));
-            this.pictureBox4.Invoke(new Action(() => { this.pictureBox4.BackColor = Color.Red; }));
-            this.pictureBox5.Invoke(new Action(() => { this.pictureBox5.BackColor = Color.Red; }));
-            this.pictureBox6.Invoke(new Action(() => { this.pictureBox6.BackColor = Color.Red; }));
-            this.label15.Invoke(new Action(() => { this.label15.Text = "清空界面数据完成,请重新扫取总成条码！"; }));
+            Inquire inquire = new Inquire();
+            inquire.Show();
         }
 
         /// <summary>
@@ -363,17 +428,19 @@ namespace EOLProject
             Save save = new Save();
             save.Assemblycode = this.textBox2.Text;
             save.Number = this.textBox1.Text;
-            save.Data1 = this.dataGridView1.Rows[0].Cells[1].Value.ToString();
-            save.Data2 = this.dataGridView1.Rows[0].Cells[2].Value.ToString();
-            save.Data3 = this.dataGridView1.Rows[0].Cells[3].Value.ToString();
-            save.Data4 = this.dataGridView1.Rows[0].Cells[4].Value.ToString();
-            save.Data5 = this.dataGridView1.Rows[0].Cells[5].Value.ToString();
+            save.Data1 = this.dataGridView1.Rows[1].Cells[1].Value.ToString();
+            save.Data2 = this.dataGridView1.Rows[1].Cells[2].Value.ToString();
+            save.Data3 = this.dataGridView1.Rows[1].Cells[3].Value.ToString();
+            save.Data4 = this.dataGridView1.Rows[1].Cells[4].Value.ToString();
+            save.Data5 = this.dataGridView1.Rows[3].Cells[1].Value.ToString();
+            save.Data6 = this.dataGridView1.Rows[3].Cells[2].Value.ToString();
+            save.Data7 = this.dataGridView1.Rows[3].Cells[3].Value.ToString();
+            save.Data8 = this.dataGridView1.Rows[3].Cells[4].Value.ToString();
             save.Date = DateTime.Now;
             entities.Save.Add(save);
             entities.SaveChanges();
-            this.button2.Invoke(new Action(() => { this.button2.Enabled = true; }));
             this.label15.Invoke(new Action(() => { this.label15.Text = "数据保存完成，正在打印条码！"; }));
-            this.pictureBox5.Invoke(new Action(() => { this.pictureBox5.BackColor = Color.Green; }));
+            this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.Green; }));
         }
 
         /// <summary>
@@ -395,21 +462,37 @@ namespace EOLProject
         {
             this.textBox1.Invoke(new Action(() => { this.textBox1.Text = ""; }));
             this.textBox2.Invoke(new Action(() => { this.textBox2.Text = ""; }));
-            this.dataGridView1.Rows[0].Cells[1].Value = "";
-            this.dataGridView1.Rows[0].Cells[2].Value = "";
-            this.dataGridView1.Rows[0].Cells[3].Value = "";
-            this.dataGridView1.Rows[0].Cells[4].Value = "";
-            this.dataGridView1.Rows[0].Cells[5].Value = "";
             this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
-            this.button2.Invoke(new Action(() => { this.button2.Enabled = false; }));
-            this.pictureBox6.Invoke(new Action(() => { this.pictureBox6.BackColor = Color.Green; }));
-            this.pictureBox3.Invoke(new Action(() => { this.pictureBox3.BackColor = Color.Red; }));
-            this.pictureBox4.Invoke(new Action(() => { this.pictureBox4.BackColor = Color.Red; }));
-            this.pictureBox5.Invoke(new Action(() => { this.pictureBox5.BackColor = Color.Red; }));
-            this.pictureBox6.Invoke(new Action(() => { this.pictureBox6.BackColor = Color.Red; }));
-            this.button4.Invoke(new Action(() => { this.button4.Enabled = false; }));
+            this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.White; }));
+            this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.White; }));
+            this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.White; }));
+            this.dataGridView1.Rows[1].Cells[1].Value = "";
+            this.dataGridView1.Rows[1].Cells[2].Value = "";
+            this.dataGridView1.Rows[1].Cells[3].Value = "";
+            this.dataGridView1.Rows[1].Cells[4].Value = "";
+            this.dataGridView1.Rows[4].Cells[1].Value = "";
+            this.dataGridView1.Rows[4].Cells[2].Value = "";
+            this.dataGridView1.Rows[4].Cells[3].Value = "";
+            this.dataGridView1.Rows[4].Cells[4].Value = "";
             this.label15.Invoke(new Action(() => { this.label15.Text = "复位成功！"; }));
-            this.label5.Invoke(new Action(() => { this.label5.Text = ""; }));
         }
+
+        #region GroupBox边框重绘
+        void GroupBox_Paint(object sender, PaintEventArgs e)
+        {
+            GroupBox gBox = (GroupBox)sender;
+
+            e.Graphics.Clear(gBox.BackColor);
+            e.Graphics.DrawString(gBox.Text, gBox.Font, Brushes.Black, 10, 1);
+            var vSize = e.Graphics.MeasureString(gBox.Text, gBox.Font);
+            e.Graphics.DrawLine(Pens.Gray, 1, vSize.Height / 2, 8, vSize.Height / 2);
+            e.Graphics.DrawLine(Pens.Gray, vSize.Width + 8, vSize.Height / 2, gBox.Width - 2, vSize.Height / 2);
+            e.Graphics.DrawLine(Pens.Gray, 1, vSize.Height / 2, 1, gBox.Height - 2);
+            e.Graphics.DrawLine(Pens.Gray, 1, gBox.Height - 2, gBox.Width - 2, gBox.Height - 2);
+            e.Graphics.DrawLine(Pens.Gray, gBox.Width - 2, vSize.Height / 2, gBox.Width - 2, gBox.Height - 2);
+        }
+
+        #endregion
+
     }
 }
