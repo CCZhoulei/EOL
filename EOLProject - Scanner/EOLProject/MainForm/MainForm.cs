@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using EOLProject.EF;
+using Microsoft.Extensions.Logging;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -17,19 +18,22 @@ using System.Windows.Forms;
 
 namespace EOLProject
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         //日志文件记录
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         //线程
         Thread thread;
+        //实例化网络通讯检测
+        Ping ping = new Ping();
+        public bool decide = true;    //while循环判断
+
         //实例化PLC连接
         IPEndPoint iPEndPoint = new IPEndPoint(IPAddress.Parse("192.168.0.37"), 3001);
         Socket socket;
-        //实例化网络通讯检测
-        Ping ping = new Ping();
+        bool rep = true;
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
         }
@@ -115,14 +119,7 @@ namespace EOLProject
             //数据位
             serialPort.DataBits = 8;
 
-            PingReply testReply = ping.Send("192.168.0.37");    //将连接PLC放在循环外，如果放在循环内部会重复连接PLC（循环内部在判断与PLC通讯状态异常处会重新连接PLC）
-            if (testReply.Status == IPStatus.Success)
-            {
-                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                socket.Connect(iPEndPoint);    //连接PLC
-            }
-
-            while (true)
+            while (decide)
             {
                 try
                 {
@@ -143,11 +140,19 @@ namespace EOLProject
                         this.pictureBox1.BackColor = Color.Green;
                         this.pictureBox2.BackColor = Color.Green;
 
+                        if (rep==true)    //判断是否连接PLC，当与PLC通讯异常会将rep改为false，关闭socket连接
+                        {
+                            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                            socket.Connect(iPEndPoint);
+                            rep = false;
+                        }
+
                         if (serialPort.IsOpen == false)
                         {
                             serialPort.Open();
                         }
-                        int s = this.label15.Text.Length;
+                        serialPort.DiscardInBuffer();    //清空数据接收缓冲区
+                        int s = this.label15.Text.Length;    //获取信息提示的长度
                         if (s == 0 || s == 18 || s == 21)
                         {
                             this.label15.Invoke(new Action(() => { this.label15.Text = "请扫取总成条码！"; }));
@@ -161,6 +166,8 @@ namespace EOLProject
                     }
                     else if (judge == true && plcReply.Status == IPStatus.TimedOut)
                     {
+                        rep = true;
+                        socket.Close();
                         this.label15.Invoke(new Action(() => { this.label15.Text = "PLC连接异常,请检查PLC网络连接"; }));
                         this.pictureBox1.BackColor = Color.Green;
                         this.pictureBox2.BackColor = Color.Red;
@@ -171,6 +178,8 @@ namespace EOLProject
                     }
                     else if (judge == false && plcReply.Status == IPStatus.TimedOut)
                     {
+                        rep = true;
+                        socket.Close();
                         this.label15.Invoke(new Action(() => { this.label15.Text = "请检查扫码枪串口连接\n请检查PLC网络连接"; }));
                         this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
                         this.pictureBox1.BackColor = Color.Red;
@@ -183,7 +192,7 @@ namespace EOLProject
 
                     if (judge == true && plcReply.Status == IPStatus.Success)    //判断扫码枪与PLC连接正常
                     {
-                        Thread.Sleep(1000);
+                            Thread.Sleep(1000);
                         string str = serialPort.ReadExisting().Replace("\r", "").Replace("\n", "");//接收扫码枪获取的总成条码
                         //int extent = str.Length;
                         if (str.Length == 23)    //判断总成条码的长度是否正常
@@ -210,22 +219,33 @@ namespace EOLProject
                             this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.Green; }));    //程序运行状态显示
                             if (plcReply.Status == IPStatus.Success)    //判断与PLC通讯是否正常
                             {
-                                EOLEntities entities = new EOLEntities();
+                                EF.EOLEntities entities = new EF.EOLEntities();
                                 List<string> list = new List<string>();
                                 var PlcData = entities.PlcDot.ToList();     //从数据库获取需要读取数据的PLC点位
-                                for (int i = 0; i < PlcData.Count(); i++)       //for循环需要读取点位的长度，下发报文，接收PLC反馈，解析PLC反馈，添加到本地数组
+                                try
                                 {
-                                    byte[] sendBytes = Transform(PlcData[i].Comm, PlcData[i].Subcomm, PlcData[i].Adress, PlcData[i].Length);    //组建报文
-                                    socket.Send(sendBytes);    //下发报文
+                                    for (int i = 0; i < PlcData.Count(); i++)       //for循环需要读取点位的长度，下发报文，接收PLC反馈，解析PLC反馈，添加到本地数组
+                                    {
+                                        byte[] sendBytes = Transform(PlcData[i].Comm, PlcData[i].Subcomm, PlcData[i].Adress, PlcData[i].Length);    //组建报文
+                                        socket.Send(sendBytes);    //下发报文
 
-                                    byte[] buffer = new byte[512];
-                                    int count = socket.Receive(buffer);    //接收报文
-                                    byte[] recv = new byte[count];
-                                    Buffer.BlockCopy(buffer, 0, recv, 0, count);    //转换到新数组
+                                        byte[] buffer = new byte[512];
+                                        int count = socket.Receive(buffer);    //接收报文
+                                        byte[] recv = new byte[count];
+                                        Buffer.BlockCopy(buffer, 0, recv, 0, count);    //转换到新数组
 
-                                    string result = AnalysisSingleData(recv, PlcData[i].Type);    //解析PLC反馈
-                                    list.Add(result);    //添加到本地数组
+                                        string result = AnalysisSingleData(recv, PlcData[i].Type);    //解析PLC反馈
+                                        list.Add(result);    //添加到本地数组
+                                    }
                                 }
+                                catch (Exception ex)
+                                {
+                                    this.label15.Invoke(new Action(() => { this.label15.Text = "PLC连接异常,请检查PLC网络连接"; }));
+                                    rep = true;
+                                    socket.Close();
+                                    logger.Info(ex);
+                                }
+                                
                                 this.dataGridView1.Rows[1].Cells[1].Value = list[0];    //界面显示PLC数据
                                 this.dataGridView1.Rows[1].Cells[2].Value = list[1];
                                 this.dataGridView1.Rows[1].Cells[3].Value = list[2];
@@ -261,10 +281,7 @@ namespace EOLProject
                 catch (Exception ex)
                 {
                     logger.Info(ex);
-                    socket.Close();
-                    Thread.Sleep(3000);
-                    socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    socket.Connect(iPEndPoint);    //连接PLC
+                    
                 }
             }
         }
@@ -292,63 +309,72 @@ namespace EOLProject
         /// <returns></returns>
         public static byte[] Transform(string order, string zorder, string data, string length)
         {
-            string address = data.Substring(0, 1);
-            switch (address)
+            try
             {
-                case "M":
-                    address = "90";
-                    break;
-                case "D":
-                    address = "A8";
-                    break;
-                default:
-                    break;
+                string address = data.Substring(0, 1);
+                switch (address)
+                {
+                    case "M":
+                        address = "90";
+                        break;
+                    case "D":
+                        address = "A8";
+                        break;
+                    default:
+                        break;
+                }
+                int d = Convert.ToInt32(data.Substring(1));
+                data = Convert.ToString(d, 16);
+                switch (data.Length)
+                {
+                    case 5:
+                        data = "0" + data;
+                        break;
+                    case 4:
+                        data = "00" + data;
+                        break;
+                    case 3:
+                        data = "000" + data;
+                        break;
+                    case 2:
+                        data = "0000" + data;
+                        break;
+                    case 1:
+                        data = "00000" + data;
+                        break;
+                    default:
+                        break;
+                }
+                byte[] header = new byte[21];// ={ 0x50,0x00,0x00,0xFF,0xFF,0x03,0x00,0x0C,0x00,001,0x00,0x01,0x14,0x00,0x00,0xA6,0x27,0x00,0xA8,0x01,0x00,0x01,0x02};
+                header[0] = 0x50;//固定（命令）:表示发起指令
+                header[1] = 0x00;
+                header[2] = 0x00;//固定（网路编号）：上位访问下位
+                header[3] = 0xFF;//固定（PLC编号）：上位访问下位
+                header[4] = 0xFF;//固定（请求目标模块IO编号）：十进制1023
+                header[5] = 0x03;
+                header[6] = 0x00;//固定（请求目标模块站编号）：上位访问下位
+                header[7] = 0x0C;//（应答数据物理长度）：值12，表示后面的报文内容长度是12
+                header[8] = 0x00;
+                header[9] = 0x10;//（CPU监视定时器）：值4秒，表示等待PLC相应的timeout时间
+                header[10] = 0x00;
+                header[11] = Convert.ToByte(order.Substring(0, 2), 16);//0104(命令):表示批量读取，1401表示随机读取
+                header[12] = Convert.ToByte(order.Substring(2, 2), 16);
+                header[13] = Convert.ToByte(zorder.Substring(0, 2), 16);//0000（子命令）：值是0表示按字读取（一个字=16位），如果值是1按位读取
+                header[14] = Convert.ToByte(zorder.Substring(2, 2), 16);
+                header[15] = Convert.ToByte(data.Substring(4, 2), 16);//258000（首地址）：十进制值600
+                header[16] = Convert.ToByte(data.Substring(2, 2), 16);
+                header[17] = Convert.ToByte(data.Substring(0, 2), 16);
+                header[18] = Convert.ToByte(address.Substring(0, 2), 16);//A8  （软元件）：表示PLC寄存器的类型，A8-D点、90-M点、9C-X点、9D-Y点、B0-ZR外部存储卡
+                header[19] = Convert.ToByte(length.Substring(0, 2), 16);//0100（读取长度）：十进制1
+                header[20] = Convert.ToByte(length.Substring(2, 2), 16);
+                return header;
             }
-            int d = Convert.ToInt32(data.Substring(1));
-            data = Convert.ToString(d, 16);
-            switch (data.Length)
+            catch (Exception ex)
             {
-                case 5:
-                    data = "0" + data;
-                    break;
-                case 4:
-                    data = "00" + data;
-                    break;
-                case 3:
-                    data = "000" + data;
-                    break;
-                case 2:
-                    data = "0000" + data;
-                    break;
-                case 1:
-                    data = "00000" + data;
-                    break;
-                default:
-                    break;
+                logger.Info(ex);
+                return null;
+                
             }
-            byte[] header = new byte[21];// ={ 0x50,0x00,0x00,0xFF,0xFF,0x03,0x00,0x0C,0x00,001,0x00,0x01,0x14,0x00,0x00,0xA6,0x27,0x00,0xA8,0x01,0x00,0x01,0x02};
-            header[0] = 0x50;//固定（命令）:表示发起指令
-            header[1] = 0x00;
-            header[2] = 0x00;//固定（网路编号）：上位访问下位
-            header[3] = 0xFF;//固定（PLC编号）：上位访问下位
-            header[4] = 0xFF;//固定（请求目标模块IO编号）：十进制1023
-            header[5] = 0x03;
-            header[6] = 0x00;//固定（请求目标模块站编号）：上位访问下位
-            header[7] = 0x0C;//（应答数据物理长度）：值12，表示后面的报文内容长度是12
-            header[8] = 0x00;
-            header[9] = 0x10;//（CPU监视定时器）：值4秒，表示等待PLC相应的timeout时间
-            header[10] = 0x00;
-            header[11] = Convert.ToByte(order.Substring(0, 2), 16);//0104(命令):表示批量读取，1401表示随机读取
-            header[12] = Convert.ToByte(order.Substring(2, 2), 16);
-            header[13] = Convert.ToByte(zorder.Substring(0, 2), 16);//0000（子命令）：值是0表示按字读取（一个字=16位），如果值是1按位读取
-            header[14] = Convert.ToByte(zorder.Substring(2, 2), 16);
-            header[15] = Convert.ToByte(data.Substring(4, 2), 16);//258000（首地址）：十进制值600
-            header[16] = Convert.ToByte(data.Substring(2, 2), 16);
-            header[17] = Convert.ToByte(data.Substring(0, 2), 16);
-            header[18] = Convert.ToByte(address.Substring(0, 2), 16);//A8  （软元件）：表示PLC寄存器的类型，A8-D点、90-M点、9C-X点、9D-Y点、B0-ZR外部存储卡
-            header[19] = Convert.ToByte(length.Substring(0, 2), 16);//0100（读取长度）：十进制1
-            header[20] = Convert.ToByte(length.Substring(2, 2), 16);
-            return header;
         }
 
         /// <summary>
@@ -425,22 +451,31 @@ namespace EOLProject
         private void button1_Click(object sender, EventArgs e)
         {
             EOLEntities entities = new EOLEntities();
-            Save save = new Save();
-            save.Assemblycode = this.textBox2.Text;
-            save.Number = this.textBox1.Text;
-            save.Data1 = this.dataGridView1.Rows[1].Cells[1].Value.ToString();
-            save.Data2 = this.dataGridView1.Rows[1].Cells[2].Value.ToString();
-            save.Data3 = this.dataGridView1.Rows[1].Cells[3].Value.ToString();
-            save.Data4 = this.dataGridView1.Rows[1].Cells[4].Value.ToString();
-            save.Data5 = this.dataGridView1.Rows[3].Cells[1].Value.ToString();
-            save.Data6 = this.dataGridView1.Rows[3].Cells[2].Value.ToString();
-            save.Data7 = this.dataGridView1.Rows[3].Cells[3].Value.ToString();
-            save.Data8 = this.dataGridView1.Rows[3].Cells[4].Value.ToString();
-            save.Date = DateTime.Now;
-            entities.Save.Add(save);
-            entities.SaveChanges();
-            this.label15.Invoke(new Action(() => { this.label15.Text = "数据保存完成，正在打印条码！"; }));
-            this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.Green; }));
+            try
+            {
+                Save save = new Save();
+                save.Assemblycode = this.textBox2.Text;
+                save.Number = this.textBox1.Text;
+                save.Data1 = this.dataGridView1.Rows[1].Cells[1].Value.ToString();
+                save.Data2 = this.dataGridView1.Rows[1].Cells[2].Value.ToString();
+                save.Data3 = this.dataGridView1.Rows[1].Cells[3].Value.ToString();
+                save.Data4 = this.dataGridView1.Rows[1].Cells[4].Value.ToString();
+                save.Data5 = this.dataGridView1.Rows[3].Cells[1].Value.ToString();
+                save.Data6 = this.dataGridView1.Rows[3].Cells[2].Value.ToString();
+                save.Data7 = this.dataGridView1.Rows[3].Cells[3].Value.ToString();
+                save.Data8 = this.dataGridView1.Rows[3].Cells[4].Value.ToString();
+                save.Date = DateTime.Now;
+                entities.Save.Add(save);
+                entities.SaveChanges();
+                this.label15.Invoke(new Action(() => { this.label15.Text = "数据保存完成，正在打印条码！"; }));
+                this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.Green; }));
+            }
+            catch (Exception ex)
+            {
+                this.label15.Invoke(new Action(() => { this.label15.Text = "保存数据至数据库异常!"; }));
+                logger.Info(ex);
+            }
+           
         }
 
         /// <summary>
@@ -450,7 +485,9 @@ namespace EOLProject
         /// <param name="e"></param>
         private void button3_Click(object sender, EventArgs e)
         {
-            System.Environment.Exit(0);
+            decide = false;    //对while循环进行终止
+            this.Close();
+            this.Dispose();
         }
 
         /// <summary>

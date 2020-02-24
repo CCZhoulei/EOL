@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace EOLProject
+namespace EOLProject.EF
 {
     using System;
     using System.Collections.Generic;
