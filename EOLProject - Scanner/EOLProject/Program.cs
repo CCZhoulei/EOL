@@ -16,7 +16,7 @@ namespace EOLProject
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Inquire());
+            Application.Run(new MainForm());
         }
     }
 }

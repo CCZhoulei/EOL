@@ -28,6 +28,11 @@ namespace EOLProject
             InitializeComponent();
         }
 
+        /// <summary>
+        /// 返回主界面按钮
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button1_Click(object sender, EventArgs e)
         {
             this.Close();
@@ -40,11 +45,21 @@ namespace EOLProject
             this.StartPosition = FormStartPosition.Manual;
         }
 
+        /// <summary>
+        /// 退出按钮
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button2_Click(object sender, EventArgs e)
         {
             System.Environment.Exit(0);
         }
 
+        /// <summary>
+        /// 导出excle按钮
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button4_Click(object sender, EventArgs e)
         {
             string path = "";
@@ -120,7 +135,7 @@ namespace EOLProject
                     CurrentPage = 1;
                     if (list.Count() != 0)
                     {
-                        PageCount = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(list.Count()) / Convert.ToDouble(20)));
+                        PageCount = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(list.Count()) / Convert.ToDouble(20)));    //Math.Ceiling:将数字向上舍入为最接近的整数。 
                         this.label9.Text = PageCount.ToString();
                         this.label11.Text = list.Count().ToString();
                         for (int i = 0; i < 20; i++)
@@ -154,17 +169,31 @@ namespace EOLProject
             }
         }
 
-
+        /// <summary>
+        /// 当总成条码文本框被选中，产品编号文本框内的数据清空
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void textBox2_MouseClick(object sender, MouseEventArgs e)
         {
             this.textBox1.Text = "";
         }
 
+        /// <summary>
+        /// 当产品编号文本框被选中，总成条码文本框内的数据清空
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void textBox1_MouseClick(object sender, MouseEventArgs e)
         {
             this.textBox2.Text = "";
         }
 
+        /// <summary>
+        /// 上一页按钮
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button6_Click(object sender, EventArgs e)
         {
             if (CurrentPage!=1)
@@ -185,6 +214,11 @@ namespace EOLProject
             }
         }
 
+        /// <summary>
+        /// 下一页按钮
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button8_Click(object sender, EventArgs e)
         {
             if (CurrentPage+1==PageCount)

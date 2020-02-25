@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.IO.Ports;
 using System.Linq;
 using System.Net;
@@ -27,6 +28,11 @@ namespace EOLProject
         //实例化网络通讯检测
         Ping ping = new Ping();
         public bool decide = true;    //while循环判断
+        SerialPort serialPort;
+        EF.EOLEntities entities = new EF.EOLEntities();
+        List<PlcDot> PlcData = new List<PlcDot>();
+
+
 
         //实例化PLC连接
         IPEndPoint iPEndPoint = new IPEndPoint(IPAddress.Parse("192.168.0.37"), 3001);
@@ -96,6 +102,8 @@ namespace EOLProject
             this.dataGridView1.Rows[0].Selected = false;
             #endregion
 
+            var PlcData = entities.PlcDot.ToList();     //从数据库获取需要读取数据的PLC点位
+
             thread = new Thread(Detection);    //执行程序
             thread.Start();
         }
@@ -107,17 +115,19 @@ namespace EOLProject
         public void Detection()
         {
             //实例化串行端口
-            SerialPort serialPort = new SerialPort();
-            //端口名  注:因为使用的是USB转RS232 所以去设备管理器中查看一下虚拟com口的名字
-            serialPort.PortName = "COM3";
-            //波特率
-            serialPort.BaudRate = 9600;
-            //奇偶校验
-            serialPort.Parity = Parity.None;
-            //停止位
-            serialPort.StopBits = StopBits.One;
-            //数据位
-            serialPort.DataBits = 8;
+            serialPort = new SerialPort
+            {
+                //端口名
+                PortName = "COM3",
+                //波特率
+                BaudRate = 9600,
+                //奇偶校验
+                Parity = Parity.None,
+                //停止位
+                StopBits = StopBits.One,
+                //数据位
+                DataBits = 8
+            };
 
             while (decide)
             {
@@ -140,7 +150,7 @@ namespace EOLProject
                         this.pictureBox1.BackColor = Color.Green;
                         this.pictureBox2.BackColor = Color.Green;
 
-                        if (rep==true)    //判断是否连接PLC，当与PLC通讯异常会将rep改为false，关闭socket连接
+                        if (rep == true)    //判断是否连接PLC，当与PLC通讯异常会将rep改为false，关闭socket连接
                         {
                             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                             socket.Connect(iPEndPoint);
@@ -151,7 +161,6 @@ namespace EOLProject
                         {
                             serialPort.Open();
                         }
-                        serialPort.DiscardInBuffer();    //清空数据接收缓冲区
                         int s = this.label15.Text.Length;    //获取信息提示的长度
                         if (s == 0 || s == 18 || s == 21)
                         {
@@ -192,100 +201,140 @@ namespace EOLProject
 
                     if (judge == true && plcReply.Status == IPStatus.Success)    //判断扫码枪与PLC连接正常
                     {
-                            Thread.Sleep(1000);
-                        string str = serialPort.ReadExisting().Replace("\r", "").Replace("\n", "");//接收扫码枪获取的总成条码
-                        //int extent = str.Length;
-                        if (str.Length == 23)    //判断总成条码的长度是否正常
-                        {
-                            #region 清空界面信息
-                            this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
-                            this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.White; }));
-                            this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.White; }));
-                            this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.White; }));
-                            this.dataGridView1.Rows[1].Cells[1].Value = "";
-                            this.dataGridView1.Rows[1].Cells[2].Value = "";
-                            this.dataGridView1.Rows[1].Cells[3].Value = "";
-                            this.dataGridView1.Rows[1].Cells[4].Value = "";
-                            this.dataGridView1.Rows[4].Cells[1].Value = "";
-                            this.dataGridView1.Rows[4].Cells[2].Value = "";
-                            this.dataGridView1.Rows[4].Cells[3].Value = "";
-                            this.dataGridView1.Rows[4].Cells[4].Value = "";
-                            #endregion
+                        Barcode();
+                        GetData();
 
-                            this.textBox1.Invoke(new Action(() => { this.textBox1.Text = str.Substring(0, 4); }));    //界面显示产品编号
-                            this.textBox2.Invoke(new Action(() => { this.textBox2.Text = str; }));    //界面显示总成条码
-                            str = "";    //将接收总成条码字段清空
-                            this.label15.Invoke(new Action(() => { this.label15.Text = "获取总成条码成功，正在获取制造参数信息！"; }));    //界面显示总成条码获取成功信息
-                            this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.Green; }));    //程序运行状态显示
-                            if (plcReply.Status == IPStatus.Success)    //判断与PLC通讯是否正常
-                            {
-                                EF.EOLEntities entities = new EF.EOLEntities();
-                                List<string> list = new List<string>();
-                                var PlcData = entities.PlcDot.ToList();     //从数据库获取需要读取数据的PLC点位
-                                try
-                                {
-                                    for (int i = 0; i < PlcData.Count(); i++)       //for循环需要读取点位的长度，下发报文，接收PLC反馈，解析PLC反馈，添加到本地数组
-                                    {
-                                        byte[] sendBytes = Transform(PlcData[i].Comm, PlcData[i].Subcomm, PlcData[i].Adress, PlcData[i].Length);    //组建报文
-                                        socket.Send(sendBytes);    //下发报文
-
-                                        byte[] buffer = new byte[512];
-                                        int count = socket.Receive(buffer);    //接收报文
-                                        byte[] recv = new byte[count];
-                                        Buffer.BlockCopy(buffer, 0, recv, 0, count);    //转换到新数组
-
-                                        string result = AnalysisSingleData(recv, PlcData[i].Type);    //解析PLC反馈
-                                        list.Add(result);    //添加到本地数组
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    this.label15.Invoke(new Action(() => { this.label15.Text = "PLC连接异常,请检查PLC网络连接"; }));
-                                    rep = true;
-                                    socket.Close();
-                                    logger.Info(ex);
-                                }
-                                
-                                this.dataGridView1.Rows[1].Cells[1].Value = list[0];    //界面显示PLC数据
-                                this.dataGridView1.Rows[1].Cells[2].Value = list[1];
-                                this.dataGridView1.Rows[1].Cells[3].Value = list[2];
-                                this.dataGridView1.Rows[1].Cells[4].Value = list[3];
-                                this.dataGridView1.Rows[4].Cells[1].Value = list[4];
-                                this.button1.Invoke(new Action(() => { this.button1.Enabled = true; }));    //保存数据并打印按钮可以使用
-                                this.label15.Invoke(new Action(() => { this.label15.Text = "制造参数获取完成，请保存数据并打印！"; }));    //界面显示制造参数获取成功信息
-                                this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.Green; }));    //程序运行状态显示
-                            }
-                        }
-                        else if (str.Length != 0 && str.Length != 23)    //判断总成条码长度异常
-                        {
-                            #region 清空界面信息
-                            this.textBox1.Invoke(new Action(() => { this.textBox1.Text = ""; }));
-                            this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
-                            this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.White; }));
-                            this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.White; }));
-                            this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.White; }));
-                            this.dataGridView1.Rows[1].Cells[1].Value = "";
-                            this.dataGridView1.Rows[1].Cells[2].Value = "";
-                            this.dataGridView1.Rows[1].Cells[3].Value = "";
-                            this.dataGridView1.Rows[1].Cells[4].Value = "";
-                            this.dataGridView1.Rows[4].Cells[1].Value = "";
-                            this.dataGridView1.Rows[4].Cells[2].Value = "";
-                            this.dataGridView1.Rows[4].Cells[3].Value = "";
-                            this.dataGridView1.Rows[4].Cells[4].Value = "";
-                            #endregion
-                            this.label15.Invoke(new Action(() => { this.label15.Text = "总成条码有误，请重新扫码！"; }));    //界面显示总成条码有误信息
-                            this.textBox2.Invoke(new Action(() => { this.textBox2.Text = str; }));    //界面显示异常总成条码
-                        }
                     }
+
                 }
                 catch (Exception ex)
                 {
                     logger.Info(ex);
-                    
                 }
             }
         }
 
+        /// <summary>
+        /// 扫码枪方法
+        /// </summary>
+        public void Barcode()
+        {
+            try
+            {
+                Thread.Sleep(1000);
+                string str = serialPort.ReadExisting().Replace("\r", "").Replace("\n", "");//接收扫码枪获取的总成条码
+                                                                                           //int extent = str.Length;
+                if (str.Length == 23)    //判断总成条码的长度是否正常
+                {
+                    #region 清空界面信息
+                    this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
+                    this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.White; }));
+                    this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.White; }));
+                    this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.White; }));
+                    this.dataGridView1.Rows[1].Cells[1].Value = "";
+                    this.dataGridView1.Rows[1].Cells[2].Value = "";
+                    this.dataGridView1.Rows[1].Cells[3].Value = "";
+                    this.dataGridView1.Rows[1].Cells[4].Value = "";
+                    this.dataGridView1.Rows[4].Cells[1].Value = "";
+                    this.dataGridView1.Rows[4].Cells[2].Value = "";
+                    this.dataGridView1.Rows[4].Cells[3].Value = "";
+                    this.dataGridView1.Rows[4].Cells[4].Value = "";
+                    #endregion
+
+                    this.textBox1.Invoke(new Action(() => { this.textBox1.Text = str.Substring(0, 4); }));    //界面显示产品编号
+                    this.textBox2.Invoke(new Action(() => { this.textBox2.Text = str; }));    //界面显示总成条码
+                    str = "";    //将接收总成条码字段清空
+                    serialPort.DiscardInBuffer();    //清空数据接收缓冲区
+                    this.label15.Invoke(new Action(() => { this.label15.Text = "获取总成条码成功，正在获取制造参数信息！"; }));    //界面显示总成条码获取成功信息
+                    this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.Green; }));    //程序运行状态显示
+                }
+                else if (str.Length != 0 && str.Length != 23)    //判断总成条码长度异常
+                {
+                    #region 清空界面信息
+                    this.textBox1.Invoke(new Action(() => { this.textBox1.Text = ""; }));
+                    this.button1.Invoke(new Action(() => { this.button1.Enabled = false; }));
+                    this.textBox3.Invoke(new Action(() => { this.textBox3.BackColor = Color.White; }));
+                    this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.White; }));
+                    this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.White; }));
+                    this.dataGridView1.Rows[1].Cells[1].Value = "";
+                    this.dataGridView1.Rows[1].Cells[2].Value = "";
+                    this.dataGridView1.Rows[1].Cells[3].Value = "";
+                    this.dataGridView1.Rows[1].Cells[4].Value = "";
+                    this.dataGridView1.Rows[4].Cells[1].Value = "";
+                    this.dataGridView1.Rows[4].Cells[2].Value = "";
+                    this.dataGridView1.Rows[4].Cells[3].Value = "";
+                    this.dataGridView1.Rows[4].Cells[4].Value = "";
+                    #endregion
+                    this.label15.Invoke(new Action(() => { this.label15.Text = "总成条码有误，请重新扫码！"; }));    //界面显示总成条码有误信息
+                    this.textBox2.Invoke(new Action(() => { this.textBox2.Text = str; }));    //界面显示异常总成条码
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Info(ex);
+                this.label15.Invoke(new Action(() => { this.label15.Text = "获取扫码枪数据异常"; }));
+            }
+        }
+
+        /// <summary>
+        /// PLC方法
+        /// </summary>
+        public void GetData()
+        {
+            List<string> list = new List<string>();
+            try
+            {
+                for (int i = 0; i < PlcData.Count(); i++)       //for循环需要读取点位的长度，下发报文，接收PLC反馈，解析PLC反馈，添加到本地数组
+                {
+                    byte[] sendBytes = Transform(PlcData[i].Comm, PlcData[i].Subcomm, PlcData[i].Adress, PlcData[i].Length);    //组建报文
+                    socket.Send(sendBytes);    //下发报文
+
+                    byte[] buffer = new byte[512];
+                    int count = socket.Receive(buffer);    //接收报文
+                    byte[] recv = new byte[count];
+                    Buffer.BlockCopy(buffer, 0, recv, 0, count);    //转换到新数组
+
+                    string result = AnalysisSingleData(recv, PlcData[i].Type);    //解析PLC反馈
+                    list.Add(result);    //添加到本地数组           
+                }
+            }
+            catch (Exception ex)
+            {
+                this.label15.Invoke(new Action(() => { this.label15.Text = "PLC连接异常,请检查PLC网络连接"; }));
+                rep = true;
+                socket.Close();
+                logger.Info(ex);
+            }
+
+            try
+            {
+                this.dataGridView1.Rows[1].Cells[1].Value = list[0];    //界面显示PLC数据
+                this.dataGridView1.Rows[1].Cells[2].Value = list[1];
+                this.dataGridView1.Rows[1].Cells[3].Value = list[2];
+                this.dataGridView1.Rows[1].Cells[4].Value = list[3];
+                this.dataGridView1.Rows[4].Cells[1].Value = list[4];
+            }
+            catch (Exception ex)
+            {
+                logger.Info(ex);
+                this.label15.Invoke(new Action(() => { this.label15.Text = "数据获取错误"; }));
+            }
+            this.button1.Invoke(new Action(() => { this.button1.Enabled = true; }));    //保存数据并打印按钮可以使用
+            this.label15.Invoke(new Action(() => { this.label15.Text = "制造参数获取完成，请保存数据并打印！"; }));    //界面显示制造参数获取成功信息
+            this.textBox4.Invoke(new Action(() => { this.textBox4.BackColor = Color.Green; }));    //程序运行状态显示
+
+
+        }
+
+        /// <summary>
+        /// 打印机方法
+        /// </summary>
+        public void Print()
+        {  
+        PrintDocument print = new PrintDocument();
+            
+            this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.Green; }));
+        }
 
 
         /// <summary>
@@ -373,7 +422,7 @@ namespace EOLProject
             {
                 logger.Info(ex);
                 return null;
-                
+
             }
         }
 
@@ -468,14 +517,14 @@ namespace EOLProject
                 entities.Save.Add(save);
                 entities.SaveChanges();
                 this.label15.Invoke(new Action(() => { this.label15.Text = "数据保存完成，正在打印条码！"; }));
-                this.textBox5.Invoke(new Action(() => { this.textBox5.BackColor = Color.Green; }));
+
             }
             catch (Exception ex)
             {
                 this.label15.Invoke(new Action(() => { this.label15.Text = "保存数据至数据库异常!"; }));
                 logger.Info(ex);
             }
-           
+
         }
 
         /// <summary>
@@ -491,7 +540,7 @@ namespace EOLProject
         }
 
         /// <summary>
-        /// 复位按钮，重新启动程序
+        /// 复位按钮，程序异常清空界面信息
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -531,5 +580,11 @@ namespace EOLProject
 
         #endregion
 
+        private void printDocument1_PrintPage(object sender, PrintPageEventArgs e)
+        {
+            Bitmap _NewBitmap = new Bitmap(panel1.Width, panel1.Height);
+            panel1.DrawToBitmap(_NewBitmap, new Rectangle(0, 0, _NewBitmap.Width, _NewBitmap.Height));
+            e.Graphics.DrawImage(_NewBitmap, 0, 0, _NewBitmap.Width, _NewBitmap.Height);
+        }
     }
 }
