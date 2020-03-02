@@ -1,0 +1,13 @@
+^XA
+
+^JMA^LL450^PW700^MD0^PR3^PON^LRN^LH0,0
+
+^CI26
+
+^FO200,0
+
+^BQN,2,6
+
+^FDHM,B0200 中文测试！123#测试￥ABC%测试^FS
+
+^XZ
